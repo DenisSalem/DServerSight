@@ -37,10 +37,7 @@ then
 	exit  -1
 fi
 
-pid_cpu_mem_command=`ps aux | sort -nrk 3 | awk -v cpu_threshold=$cpu_threshold -v mem_threshold=$mem_threshold '$3 >= cpu_threshold {out=$2"\t"$3"\t"$4"\t"$11; for (i=12;i<=NF;i++){out=out" "$i}; print"\t"out}';`
-
-echo "$pid_cpu_mem_command"
-
+pid_cpu_mem_command=`ps aux | sort -nrk 3 | awk -v cpu_threshold=$cpu_threshold -v mem_threshold=$mem_threshold '$2 != "PID" && (int($3)>=cpu_threshold || int($4)>=mem_threshold) {out=$2"\t"$3"\t"$4"\t"$11; for (i=12;i<=NF;i++){out=out" "$i}; print "\t"out}';`
 if test ! -z "$pid_cpu_mem_command"
 then
 	mkdir -p /var/log/DServerSight/
