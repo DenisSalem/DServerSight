@@ -17,28 +17,35 @@
 # You should have received a copy of the GNU General Public License
 # along with DServerSight. If not, see <http://www.gnu.org/licenses/>.
 
+# TODO : Watch memory as well.
+
 for ARGUMENT in "$@"
 do
     KEY=$(echo $ARGUMENT | cut -f1 -d=)
     VALUE=$(echo $ARGUMENT | cut -f2 -d=)   
 
     case "$KEY" in
-            threshold)    threshold=${VALUE} ;;     
+            cpu_threshold)       cpu_threshold=${VALUE} ;;     
+            mem_threshold)    mem_threshold=${VALUE} ;;     
             *)   
     esac    
 done
 
-if test -z "$threshold"
+if test -z "$cpu_threshold" || test -z "$mem_threshold"
 then
-	echo -e "usage: process_hunger.sh threshold=\"cpu load_value\""
+	echo -e "usage: process_hunger.sh cpu_threshold=\"cpu load_value\"  mem_threshold=\"memory_usage_value\""
 	exit  -1
 fi
 
-pid_cpu_command=`ps aux | sort -nrk 3 | awk -v threshold=$threshold '$2 != "PID" &&  $3>=threshold {out=$2"\t"$3"\t"$11; for (i=12;i<=NF;i++){out=out" "$i}; print "\t"out}';`
-if test ! -z "$pid_cpu_command"
+pid_cpu_mem_command=`ps aux | sort -nrk 3 | awk -v cpu_threshold=$cpu_threshold -v mem_threshold=$mem_threshold '$3 >= cpu_threshold {out=$2"\t"$3"\t"$4"\t"$11; for (i=12;i<=NF;i++){out=out" "$i}; print"\t"out}';`
+
+echo "$pid_cpu_mem_command"
+
+if test ! -z "$pid_cpu_mem_command"
 then
-	touch /var/log/DServerSight-ProcessHunger.log
-	date +"%d-%m-%Y %H:%M:%S" >> /var/log/DServerSight-ProcessHunger.log 
-	echo -e "\tPID\tCPU\tCOMMAND"  >> /var/log/DServerSight-ProcessHunger.log 
-	echo -e "$pid_cpu_command"  >> /var/log/DServerSight-ProcessHunger.log 
+	mkdir -p /var/log/DServerSight/
+	touch /var/log/DServerSight/ProcessHunger.log
+	date +"%d-%m-%Y %H:%M:%S" >> /var/log/DServerSight/ProcessHunger.log 
+	echo -e "\tPID\tCPU\tMEM\tCOMMAND"  >> /var/log/DServerSight/ProcessHunger.log 
+	echo -e "$pid_cpu_mem_command"  >> /var/log/DServerSight/ProcessHunger.log 
 fi
